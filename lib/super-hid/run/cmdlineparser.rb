@@ -27,8 +27,10 @@ module SuperHid::Run
   # Parses the command line arguments passed to the super-hid program at invocation
   class CommandLineParser
 
+    attr_reader :devices, :options
 
     def initialize
+      @devices = []
       @options = {}
     end
 
@@ -38,11 +40,17 @@ module SuperHid::Run
       option_parser = OptionParser.new do |opts|
 
         opts.banner =
-          "Usage: #{File.basename $0} [ --config=<config-file> ] [ --input-layout=<kbd-layout> --target-layout=<kbd-layout> ] [ options ... ]"
+          "Usage: #{File.basename $0} [ --config=<config-file> ] [ --device=/dev/input/<device> ... ] [ --input-layout=<kbd-layout> --target-layout=<kbd-layout> ] [ options ... ]"
         
 	opts.on("--config=PATH",
                 "Read key mapping configuration from given config file.") do |arg|
           @options[:config_file] = arg
+        end
+
+        opts.on("-dDEVICE",
+                "--device=DEVICE",
+                "Read input from this device.") do |arg|
+          @devices << arg
         end
 
         opts.on("-iLAYOUT",

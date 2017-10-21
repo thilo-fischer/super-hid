@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2016  Thilo Fischer.
 #
@@ -17,33 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with super-hid.  If not, see <http://www.gnu.org/licenses/>.
 
-require 'singleton'
+require 'logger'
 
-require 'super-hid/input/input'
+$logger = Logger.new(STDOUT)
+$logger.level = Logger::DEBUG # XXX
 
-##
-# Things related to the currently running program instance.
-module SuperHid::Run  
+module SuperHid::Logging
 
-  class Main
+  
+end # module SuperHid::Logging
 
-    include Singleton
-
-    def run
-      @cmdlineparser = SuperHid::Ui::CommandLineParser.new
-      @cmdlineparser.parse
-      
-      #puts @cmdlineparser.inspect
-
-      input = DevInput.new(@cmdlineparser.devices)
-
-      #while true
-        events = DevInput.get_events
-        
-      #end
-
-    end # def run
-
-  end # class Main
-
-end # module SuperHid::Run
