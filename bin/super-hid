@@ -22,8 +22,8 @@
 module SuperHid
 
   require 'super-hid'
-  require 'super-hid/session/main'
+  require 'super-hid/run/main'
 
-  SuperHid::Session::Main.instance.run
+  SuperHid::Run::Main.instance.run
   
 end # module SuperHid

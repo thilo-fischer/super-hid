@@ -59,7 +59,7 @@ module SuperHid::Run
           @options[:input_layout] = arg
         end
 
-        opts.on("-tLAYOUT"
+        opts.on("-tLAYOUT",
                 "--target-layout=LAYOUT",
                 "Send keycodes to be interpreted with given X11 kbd layout.") do |arg|
           @options[:target_layout] = arg

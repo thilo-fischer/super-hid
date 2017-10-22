@@ -19,28 +19,29 @@
 
 require 'singleton'
 
+require 'super-hid/run/cmdlineparser'
 require 'super-hid/input/input'
 
 ##
 # Things related to the currently running program instance.
-module SuperHid::Run  
+module SuperHid::Run
 
   class Main
 
     include Singleton
 
     def run
-      @cmdlineparser = SuperHid::Ui::CommandLineParser.new
+      @cmdlineparser = CommandLineParser.new
       @cmdlineparser.parse
       
       #puts @cmdlineparser.inspect
 
-      input = DevInput.new(@cmdlineparser.devices)
+      input = SuperHid::Input::DevInput.new(@cmdlineparser.devices)
 
-      #while true
-        events = DevInput.get_events
+      10.times do #while true
+        events = input.get_events
         
-      #end
+      end
 
     end # def run
 
