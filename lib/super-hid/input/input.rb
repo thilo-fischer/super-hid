@@ -30,8 +30,9 @@ module SuperHid::Input
     ##
     # Container for the data read from /dev/input/* device files.
     class Event
-      attr_reader :time, :type, :code, :value
-      def initialize(time, type, code, value)
+      attr_reader :source, :time, :type, :code, :value
+      def initialize(source, time, type, code, value)
+        @source = source
         @time = time
         @type = type.is_a?(Symbol) ? type : Constants::EVENT_TYPES[type]
         if code.is_a?(Symbol)
@@ -83,8 +84,8 @@ module SuperHid::Input
       events = sel_read.map do |dev|
         binary = dev.sysread(SIZEOF_INPUT_EVENT)
         type, code, value = binary.unpack(INPUT_EVENT_UNPACK_FMTSTR)
-        ev = Event.new(0, type, code, value) # XXX time
-        $logger.debug("from #{dev.inspect}: #{binary.unpack("H*")} => #{ev.inspect}")
+        ev = Event.new(dev, 0, type, code, value) # XXX time
+        $logger.debug("from #{dev.inspect}: #{ev.inspect}")
       end
 
       events

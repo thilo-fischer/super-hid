@@ -31,9 +31,16 @@ module SuperHid::Input
     ##
     # Defines constants from include/linux/input.h for Ruby code
     module Constants
+
+      def value(constant_name)
+        constant_name = constant_name.to_s if constant_name.is_a?(Symbol)
+        raise "invalid argument" unless constant_name.is_a?(String)
+        eval(constant_name)
+      end
       
       #
       # Event types
+      # see https://www.kernel.org/doc/Documentation/input/event-codes.txt
       #
 
       EV_SYN			= 0x00
