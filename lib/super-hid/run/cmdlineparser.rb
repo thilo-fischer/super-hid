@@ -40,110 +40,118 @@ module SuperHid::Run
 
     def parse
 
-      # to collect device arguments and event filter options (+--event+) given before operation option
-      devices = []
-      filters = []
+      config_files = []
+      all_sources = []
+      operations = []
+
+      current_sources = []
+      current_conditions = []
+
+      state = :then
       
-     option_parser = OptionParser.new do |opts|
-
+      option_parser = OptionParser.new do |opts|
+        
         opts.banner =
-          "Usage: #{File.basename $0} [ --config=<config-file> ] ( [ /dev/input/<device> ... ] [ --event=<type>[:<code>[:<value>]] ... ] <operation-option> [ --final ] ) ..."
+          "Usage: #{File.basename $0} ( ( --config <config-file> ... ) | ( [ --from <source> ... ] [ --when <condition> ... ] --then <operation> ... [ [ --else ] [ --when <condition> ... ] --then <operation> ... ] ) ) ..."
         
-	opts.on("--config=PATH",
-                "Read key mapping configuration from given config file.") do |arg|
-          @options[:config_file] = arg
+	opts.on("--config",
+                "Read configuration parameters and operation rules from the following config files.") do
+          state = :config
+        end
+        
+	opts.on("--from",
+                "Track input and other events from the following input device files and other other sources.") do
+          state = :from
         end
 
-	opts.on("--event=<type>[:<code>[:<value>]]",
-                "Apply the following operations only to those events matching the given filter. <type> is the name of a specific event type according to https://www.kernel.org/doc/Documentation/input/event-codes.txt, a (Ruby) regular expression matching such names or a comma-separated list of these. Filter may also restrict events to certain event codes of values using the <code> and <value> parameters. <code> may be the name of a specific event code according to +include/linux/input.h+, a (Ruby) regular expression matching such names, an integer value, a range between integer values and/or code names or a comma-separated list of these. <value> may be an integer values, a range between integer values or a comma-separated list of these. Ranges for <code> and <value> can be specified as '64..127' or '64...128' according to the Ruby range syntax. Option may be given multiple times, and events must match at least one (not all) filters to apply operations.") do |arg|
-          types, codes, values = arg.split(':')
-          types = types.split(',').map do |arg|
-            arg.strip!
-            case arg
-            when /^\w+$/
-              arg
-            when /^\/.*\/$/
-              Regexp.new(arg)
-            else
-              raise "invalid event type specifier: `#{arg}'"
-            end
+	opts.on("--when",
+                "Apply operations only on those events that match at least one of the following conditions.") do
+          if state == :else
+            raise "TODO"
           end
-          codes = codes.split(',').map do |arg|
-            arg.strip!
-            case arg
-            when /^\w+$/
-              arg
-            when /^\/.*\/$/
-              Regexp.new(arg)
-            when /^(0x)?\d$/
-              base = $1 ? 16 : 10
-              arg.to_i(base)
-            when /^(\w+|(0x)?\d)(\.\.\.?)(\w+|(0x)?\d)$/
-              raise "TODO: event code range from symbol or integer to symbol or integer"
-            else
-              raise "invalid event code specifier: `#{arg}'"
-            end
-          end if codes
-          values = values.split(',').map do |arg|
-            arg.strip!
-            case arg
-            when /^(0x)?\d$/
-              base = $1 ? 16 : 10
-              arg.to_i(base)
-            when /^((0x)?\d)(\.\.\.?)((0x)?\d)$/
-              raise "TODO: event value range"
-            else
-              raise "invalid event code specifier: `#{arg}'"
-            end
-          end if values
-          filters << EventFilterStandard.new(types, codes, values)
+          state = :when
         end
 
-	opts.on("--final",
-                "If operation has been applied to an event successfully, do not apply any further operations to it.") do |arg|
-          @operations.last.final = true
+	opts.on("--then",
+                "Apply the following operations.") do
+          state = :then
+        end
+
+	opts.on("--else",
+                "When given before an operation: Apply the following operation(s) only if the previous operation did not succeed. When given before an `--when' option: Test following conditions and (possibly) apply following operations only if none of the conditions on the previous `--when' option matched or if previous operation did not succeed.") do
+          state = :else
         end
 
         opts.separator ""
-        opts.separator "Devices:"
-        opts.separator "Apply the following operations to the given devices."
+
+        opts.separator "Supported sources:"
+        opts.separator "dev:foo        -> device /dev/input/by-path/foo"
+        opts.separator "dev:*foo*      -> all devices maching /dev/input/by-path/*foo*"
+        opts.separator "dev            -> all devices in /dev/input/by-path/"
+        opts.separator "/dev/input/foo -> device /dev/input/foo"
+        opts.separator "dev_kind:(kbd|mouse|game) -> all keyboards/mice/game controllers found in /dev/input/by-path/"
+        opts.separator "timer:NN(s|m|h)[:once] -> virtual source that provides an event after the given number of seconds, minutes or hours, cyclically or if `:once' is given just once."
+        opts.separator "..."
 
         opts.separator ""
-        opts.separator "Operations:"
 
-        opts.on("--nop",
-                "No-operation: Don't do anything. Useful e.g. in combination with `--final' to stop processing events with successive operations.") do
-          Operation.new(devices, filters)
-          devices, filters = [], []
-        end
-        
-        opts.on("--combine=OPERATIONS",
-                "Apply all given oprations successively. OPERATIONS is a string containing other operation and optional `--final' command line options. Command line options in the string shall be whitespace separated, keep in mind to escape this properly on the command line.") do |arg|
-          raise TODO
-          devices, filters = [], []
-        end
+        opts.separator "Supported conditions for dev sources:"
+        opts.separator "dev:<type>[:<code>[:<value>]] -> matches events from /dev/input sources with appropriate type, code and value. <type> is the name of a specific event type according to https://www.kernel.org/doc/Documentation/input/event-codes.txt, a (Ruby) regular expression matching such names or a comma-separated list of these. <code> may be the name of a specific event code according to +include/linux/input.h+, a (Ruby) regular expression matching such names, an integer value, a range between integer values and/or code names or a comma-separated list of these. <value> may be an integer values, a range between integer values or a comma-separated list of these. Ranges for <code> and <value> can be specified as '64..127' or '64...128' according to the Ruby range syntax. Option may be given multiple times, and events must match at least one (not all) filters to apply operations."
 
-        # XXX? add command line option +--drop+ as shortcut for +--nop --final+ followed by unrestricted +--forward+
-        #opts.on("--drop",
-        #        "Ignore such events.") do
-        #  OperationDrop.new(devices, filters)
-        #  devices, filters = [], []
+        #  types, codes, values = arg.split(':')
+        #  types = types.split(',').map do |arg|
+        #    arg.strip!
+        #    case arg
+        #    when /^\w+$/
+        #      arg
+        #    when /^\/.*\/$/
+        #      Regexp.new(arg)
+        #    else
+        #      raise "invalid event type specifier: `#{arg}'"
+        #    end
+        #  end
+        #  codes = codes.split(',').map do |arg|
+        #    arg.strip!
+        #    case arg
+        #    when /^\w+$/
+        #      arg
+        #    when /^\/.*\/$/
+        #      Regexp.new(arg)
+        #    when /^(0x)?\d$/
+        #      base = $1 ? 16 : 10
+        #      arg.to_i(base)
+        #    when /^(\w+|(0x)?\d)(\.\.\.?)(\w+|(0x)?\d)$/
+        #      raise "TODO: event code range from symbol or integer to symbol or integer"
+        #    else
+        #      raise "invalid event code specifier: `#{arg}'"
+        #    end
+        #  end if codes
+        #  values = values.split(',').map do |arg|
+        #    arg.strip!
+        #    case arg
+        #    when /^(0x)?\d$/
+        #      base = $1 ? 16 : 10
+        #      arg.to_i(base)
+        #    when /^((0x)?\d)(\.\.\.?)((0x)?\d)$/
+        #      raise "TODO: event value range"
+        #    else
+        #      raise "invalid event code specifier: `#{arg}'"
+        #    end
+        #  end if values
+        #  filters << EventFilterStandard.new(types, codes, values)
         #end
 
-        opts.on("--forward",
-                "Simply forward events the operation applies to, drop all other.") do
-          OperationForward.new(devices, filters)
-          devices, filters = [], []
-        end
+        opts.separator ""
+        opts.separator "Supported Operations:"
 
-        opts.on("--kbd-layout-translate=FROM:TO",
-                "Interpret input from connected keyboards according to X11 kbd layout given as FROM and send keys to target system according to X11 kbd layout given as TO.") do |arg|
-          from, to = arg.split(':')
-          OperationKbdLayoutTranslate.new(devices, filters, from, to)
-          devices, filters = [], []
-        end
+        opts.separator("nop         -> No-operation: Don't do anything, is always successful.")
+        opts.separator("log[:verbose] -> Print information about the event to stdout or log file; print greater amount of information if `:verbose' is given.")
+        opts.separator("generate:<output> -> Simulate events specified by <output>.")
+        opts.separator("forward     -> Forward events. (Useful to set up filters that drop certain events.)")
+        opts.separator("kbd-layout-translate:FROM:TO -> Interpret input from connected keyboards according to X11 kbd layout given as FROM and send keys to target system according to X11 kbd layout given as TO.")
 
         opts.separator ""
+        
         opts.separator "Common options:"
 
         opts.on_tail("-h", "--help", "Prints this help") do
@@ -159,7 +167,22 @@ module SuperHid::Run
       end # OptionParser.new
 
       option_parser.order(ARGV) do |arg|
-        devices << arg
+        case state
+        when :config
+          config_files << arg # XXX parse config file
+        when :from
+          src = Source.create(arg)
+          all_sources << src unless all_sources.include?(src)
+          current_sources << src
+        when :when
+          current_conditions << Condition.create(arg)
+        when :then
+          operations << Operation.create(arg, current_sources, current_conditions)
+        when :else
+          raise "TODO"
+        else
+          raise "invalid command line syntax. unexpected: `#{arg}'"
+        end
       end
 
     end # def parse
