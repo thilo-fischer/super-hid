@@ -26,7 +26,7 @@
 #  ruby -ne 'puts $_.gsub(/^\/\*$/, "#").gsub(/^ \*\/$/, "#").gsub(/^ \*/, "#").gsub(/\/\*(.*?)\*\//, "#\\1").gsub(/^#define (\w+\s+)/, "\\1= ")'
 # helped a lot to create this file's content ...
 
-module SuperHid::Input
+module SuperHid::Source
   class DevInput
     ##
     # Defines constants from include/linux/input.h for Ruby code
@@ -898,4 +898,4 @@ module SuperHid::Input
 
     end # module Constants
   end # class DevInput
-end # module SuperHid::Input
+end # module SuperHid::Source

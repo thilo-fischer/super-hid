@@ -19,8 +19,10 @@
 
 require 'optparse'
 
+#require 'super-hid/run/cfgfileparser'
+require 'super-hid/source/sources'
+require 'super-hid/processing/conditions'
 require 'super-hid/processing/operations'
-require 'super-hid/processing/event_filters'
 
 ##
 # Start an instance of the super-hid program
@@ -30,29 +32,21 @@ module SuperHid::Run
   # Parses the command line arguments passed to the super-hid program at invocation
   class CommandLineParser
 
-    attr_reader :devices, :options
-
-    def initialize
-      @operations = []
-      @options = {}
+    def initialize(session)
+      @session = session
     end
-
 
     def parse
 
-      config_files = []
-      all_sources = []
-      operations = []
-
-      current_sources = []
-      current_conditions = []
-
       state = :then
       
+      sources = []
+      conditions = []
+
       option_parser = OptionParser.new do |opts|
         
         opts.banner =
-          "Usage: #{File.basename $0} ( ( --config <config-file> ... ) | ( [ --from <source> ... ] [ --when <condition> ... ] --then <operation> ... [ [ --else ] [ --when <condition> ... ] --then <operation> ... ] ) ) ..."
+          "Usage: #{File.basename $0} ( <operation> ... ) | ( ( --config <config-file> ... ) | ( [ --from <source> ... ] [ --when <condition> ... ] --then <operation> ... [ [ --else ] [ --when <condition> ... ] --then <operation> ... ] ) ) ..."
         
 	opts.on("--config",
                 "Read configuration parameters and operation rules from the following config files.") do
@@ -78,8 +72,19 @@ module SuperHid::Run
         end
 
 	opts.on("--else",
-                "When given before an operation: Apply the following operation(s) only if the previous operation did not succeed. When given before an `--when' option: Test following conditions and (possibly) apply following operations only if none of the conditions on the previous `--when' option matched or if previous operation did not succeed.") do
+                "When given before an operation: Apply the following operation(s) only if the previous operation did not succeed. When given before an `--when' option: Test following conditions and (possibly) apply following operations only if none of the conditions on the previous `--when' option matched or if previous operation did not succeed.\nYou can use `--else' to express such thing as 'Stop processing here unless the previous thing failed.'") do
           state = :else
+          raise "not yet implemented"
+        end
+
+	opts.on("--all-of",
+                "If given before an operation: all operations of this `--then' option following the option up until the next `--else' option must succeed to not apply following operations. If given before a `--when' option: TBD.") do
+          raise "Not yet implemented."
+        end
+
+	opts.on("--one-of",
+                "If given before an operation: at least one operation of this `--then' option following the option up until the next `--else' option must succeed to not apply following operations (usually the last operation must succeed, with `--one-of' just one arbitrary operation must succeed). If given before a `--when' option: TBD.") do
+          raise "Not yet implemented."
         end
 
         opts.separator ""
@@ -95,8 +100,12 @@ module SuperHid::Run
 
         opts.separator ""
 
+        opts.separator "Supported general conditions:"
+        opts.separator "always        -> true for every event"
         opts.separator "Supported conditions for dev sources:"
         opts.separator "dev:<type>[:<code>[:<value>]] -> matches events from /dev/input sources with appropriate type, code and value. <type> is the name of a specific event type according to https://www.kernel.org/doc/Documentation/input/event-codes.txt, a (Ruby) regular expression matching such names or a comma-separated list of these. <code> may be the name of a specific event code according to +include/linux/input.h+, a (Ruby) regular expression matching such names, an integer value, a range between integer values and/or code names or a comma-separated list of these. <value> may be an integer values, a range between integer values or a comma-separated list of these. Ranges for <code> and <value> can be specified as '64..127' or '64...128' according to the Ruby range syntax. Option may be given multiple times, and events must match at least one (not all) filters to apply operations."
+        opts.separator "Supported higher level conditions:"
+        opts.separator "key-seq:<seq>     -> A specific sequence of keys was pressed on a keyboard."
 
         #  types, codes, values = arg.split(':')
         #  types = types.split(',').map do |arg|
@@ -149,6 +158,7 @@ module SuperHid::Run
         opts.separator("generate:<output> -> Simulate events specified by <output>.")
         opts.separator("forward     -> Forward events. (Useful to set up filters that drop certain events.)")
         opts.separator("kbd-layout-translate:FROM:TO -> Interpret input from connected keyboards according to X11 kbd layout given as FROM and send keys to target system according to X11 kbd layout given as TO.")
+        opts.separator("QUIT        -> quit super-hid process.")
 
         opts.separator ""
         
@@ -169,17 +179,17 @@ module SuperHid::Run
       option_parser.order(ARGV) do |arg|
         case state
         when :config
-          config_files << arg # XXX parse config file
+          ConfigFileParser.process(arg, @session)
         when :from
-          src = Source.create(arg)
-          all_sources << src unless all_sources.include?(src)
-          current_sources << src
+          src = SuperHid::Source::Sources.create(arg)
+          @session.announce_source(src)
+          sources << src
         when :when
-          current_conditions << Condition.create(arg)
+          conditions << SuperHid::Processing::Conditions.create(arg)
         when :then
-          operations << Operation.create(arg, current_sources, current_conditions)
+          @session.add_operation(SuperHid::Processing::Operations.create(arg, sources, conditions))
         when :else
-          raise "TODO"
+          raise "not yet implemented"
         else
           raise "invalid command line syntax. unexpected: `#{arg}'"
         end

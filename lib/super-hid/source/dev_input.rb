@@ -18,9 +18,9 @@
 # along with super-hid.  If not, see <http://www.gnu.org/licenses/>.
 
 require 'super-hid/log/logging'
-require 'super-hid/input/dev_input_constants'
+require 'super-hid/source/dev_input_constants'
 
-module SuperHid::Input
+module SuperHid::Source
 
   ##
   # Read linux's /dev/input/* device files.
@@ -41,6 +41,10 @@ module SuperHid::Input
           case @type
           when :EV_KEY
             @code = Constants::KEYS_AND_BTNS[code]
+          when :EV_REL
+            @code = code
+          when :EV_SYN
+            @code = code
           else
             $logger.warn("Unknown input_event.code: #{code} for type #{@type}")
             @code = code
@@ -48,6 +52,9 @@ module SuperHid::Input
         end
         @value = value
       end # def initialize
+      def to_s
+        "#{@type}:#{@code}:#{@value}"
+      end
     end # class Event
     
     # FIXME padding? (platform specific to align with 32 or 64 bit?)
@@ -56,41 +63,44 @@ module SuperHid::Input
     SIZEOF_INT32 = 4
     SIZEOF_INPUT_EVENT = SIZEOF_TIMEVAL + SIZEOF_INT16 + SIZEOF_INT16 + SIZEOF_INT32
     INPUT_EVENT_UNPACK_FMTSTR = "@#{SIZEOF_TIMEVAL}SSl"
+
+    attr_reader :path
+
+    @@devices = {}
     
-    def initialize(devices)
-      @devices = devices.map do |dev|
-        case dev
-        when String
-          File.open(dev)
-        when IO
-          dev
-        else
-          raise
-        end
-      end
-      
-      $logger.debug("Input devices to track: #{@devices.inspect}")
+    def initialize(path)
+      @path = path
+      @io = File.open(path)
+      @@devices[@io] = self
     end # def initialize
-    
+
     ##
     # Wait for devices to return an input_event.
     # Returns an array of all input_events read from the tracked device files (converted to DevInput.Event objects).
-    def get_events
-      sel = IO.select(@devices)
-      sel_read = sel.first
+    def self.get_events
+      sel = IO.select(@@devices.keys)
+      sel_read = sel[0]
 
-      $logger.debug("input events available at #{sel_read.inspect}")
+      #$logger.debug("input events available at #{sel_read.inspect}")
 
-      events = sel_read.map do |dev|
-        binary = dev.sysread(SIZEOF_INPUT_EVENT)
-        type, code, value = binary.unpack(INPUT_EVENT_UNPACK_FMTSTR)
-        ev = Event.new(dev, 0, type, code, value) # XXX time
-        $logger.debug("from #{dev.inspect}: #{ev.inspect}")
+      events = []
+
+      sel_read.each do |dev_io|
+        count = 0
+        begin
+          binary = dev_io.read_nonblock(SIZEOF_INPUT_EVENT)
+          type, code, value = binary.unpack(INPUT_EVENT_UNPACK_FMTSTR)
+          events << Event.new(@@devices[dev_io], 0, type, code, value) # XXX time
+        rescue SystemCallError
+          # read_nonblock called and no data ready to be read
+          raise "could not read any event" if count == 0
+        end
       end
 
+      #$logger.debug("#{events.length} new event(s): #{events.inspect}")
       events
     end # def get_events
     
   end # class DevInput
 
-end # module SuperHid::Input
+end # module SuperHid::Source

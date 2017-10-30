@@ -19,8 +19,10 @@
 
 require 'singleton'
 
+require 'super-hid/run/session'
 require 'super-hid/run/cmdlineparser'
-require 'super-hid/input/input'
+
+require 'super-hid/source/dev_input'
 
 ##
 # Things related to the currently running program instance.
@@ -31,15 +33,25 @@ module SuperHid::Run
     include Singleton
 
     def run
-      @cmdlineparser = CommandLineParser.new
+      @session = Session.new
+      
+      @cmdlineparser = CommandLineParser.new(@session)
       @cmdlineparser.parse
       
-      #puts @cmdlineparser.inspect
+      $logger.debug("** Session: #{@session.inspect}")
 
-      input = SuperHid::Input::DevInput.new(@cmdlineparser.devices)
+      while true do
 
-      10.times do #while true
-        events = input.get_events
+        # For now: only one source, DevInput.
+        # TODO support multipe sources simultaneously => multithreaded source tracking
+        events = SuperHid::Source::DevInput.get_events
+
+        events.each do |ev|
+          @session.operations.each do |op|
+            # XXX stop procession according to `--else' option -> arrange operations in a tree structure instead of in an array?!
+            op.check(ev)
+          end
+        end
         
       end
 

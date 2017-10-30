@@ -21,20 +21,17 @@ module SuperHid::Processing
 
   class Operation
 
-    attr_accessor :final
-
-    def initialize(devices, event_filters, final = false)
-      @devices = devices
-      @event_filters = event_filters
-      @final = final
+    def initialize(sources, conditions)
+      @sources = sources
+      @conditions = conditions
     end
 
     ##
     # Test if operation applies to event. If so, process event.
-    # Returns true if no further operations shall process the event.
+    # Returns true if event processed successfully
     def check(event)
       if apply?(event)
-        process(event) and @final
+        process(event)
       else
         false
       end
@@ -43,8 +40,17 @@ module SuperHid::Processing
     ##
     # Return true is operation applies to event, i.e. event's source device is in the list of devices the operations applies to and event matches the operations event filter.
     def apply?(event)
-      (devices == nil or devices.empty? or devices.find {|d| File.identical?(event.source, d) }) and
-        (event_filters == nil or event_filters == empty? or event_filters.find {|f| f.apply?(event) })
+      (
+        @sources == nil or
+        @sources.empty? or
+        #@sources.find {|src| File.identical?(event.source.path, src.path) }
+        #@sources.find {|src| event.source == src }
+        @sources.find {|src| event.source.equal?(src) }
+      ) and (
+        @conditions == nil or
+        @conditions.empty? or
+        @conditions.find {|cond| cond.apply?(event) }
+      )
     end
 
     ##

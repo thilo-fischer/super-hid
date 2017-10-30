@@ -18,5 +18,38 @@
 # along with super-hid.  If not, see <http://www.gnu.org/licenses/>.
 
 require 'super-hid/processing/operation'
+require 'super-hid/processing/operation_log'
 require 'super-hid/processing/operation_forward'
 require 'super-hid/processing/operation_kbd_layout_translate'
+require 'super-hid/processing/operation_quit'
+
+module SuperHid::Processing
+
+  module Operations
+
+    def self.create(spec, sources, conditions)
+      case spec
+      when String
+        case spec
+        when "nop"
+          Operation.new(sources, conditions)
+        when /^log(:verbose)?$/
+          OperationLog.new(sources, conditions, $1)
+        when "forward"
+          OperationForward.new(sources, conditions)
+        when /^kbd-layout-translate:(.*):(.*)$/
+          from_layout = $1
+          to_layout = $2
+          OperationKbdLayoutTranslate.new(sources, condition, from_layout, to_layout)
+        when "QUIT"
+          OperationQuit.new(sources, conditions)
+        else
+          raise "invalid operation spec: #{spec}"
+        end
+      else
+        raise "unsupported operation spec: #{spec.inspect}"
+      end
+    end
+
+  end # module Operations
+end # module SuperHid::Processing
