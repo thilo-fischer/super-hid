@@ -30,27 +30,35 @@ module SuperHid::Source
     ##
     # Container for the data read from /dev/input/* device files.
     class Event
+      KEY_VALUES = [ :release, :press, :repeat ]
       attr_reader :source, :time, :type, :code, :value
       def initialize(source, time, type, code, value)
         @source = source
         @time = time
         @type = type.is_a?(Symbol) ? type : Constants::EVENT_TYPES[type]
-        if code.is_a?(Symbol)
-          @code = code
-        else
+        @code = code
+        @value = value
+        
+        unless code.is_a?(Symbol)
           case @type
-          when :EV_KEY
-            @code = Constants::KEYS_AND_BTNS[code]
-          when :EV_REL
-            @code = code
           when :EV_SYN
             @code = code
+          when :EV_KEY
+            @code = Constants::KEYS_AND_BTNS[code]
+            @value = KEY_VALUES[value]
+          when :EV_REL
+            @code = Constants::REL_AXES[code]
+          when :EV_ABS
+            @code = Constants::ABS_AXES[code]
+          when :EV_SW
+            @code = Constants::SWITCH_EV[code]
+          when :EV_MSC
+            @code = Constants::MISC_EV[code]
           else
             $logger.warn("Unknown input_event.code: #{code} for type #{@type}")
             @code = code
           end
         end
-        @value = value
       end # def initialize
       def to_s
         "#{@type}:#{@code}:#{@value}"

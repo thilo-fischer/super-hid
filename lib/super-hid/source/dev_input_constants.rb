@@ -686,6 +686,11 @@ module SuperHid::Source
       REL_MAX			= 0x0f
       REL_CNT			= (REL_MAX+1)
 
+      REL_AXES = {}
+      constants.each do |c|
+        REL_AXES[eval(c.to_s)] = c if c =~ /^REL_/
+      end
+
       #
       # Absolute axes
       #
@@ -739,6 +744,11 @@ module SuperHid::Source
       ABS_MAX			= 0x3f
       ABS_CNT			= (ABS_MAX+1)
 
+      ABS_AXES = {}
+      constants.each do |c|
+        ABS_AXES[eval(c.to_s)] = c if c =~ /^ABS_/
+      end
+
       #
       # Switch events
       #
@@ -762,6 +772,11 @@ module SuperHid::Source
       SW_MAX			= 0x0f
       SW_CNT			= (SW_MAX+1)
 
+      SWITCH_EV = {}
+      constants.each do |c|
+        SWITCH_EV[eval(c.to_s)] = c if c =~ /^SW_/
+      end
+
       #
       # Misc events
       #
@@ -774,6 +789,11 @@ module SuperHid::Source
       MSC_TIMESTAMP		= 0x05
       MSC_MAX			= 0x07
       MSC_CNT			= (MSC_MAX+1)
+
+      MISC_EV = {}
+      constants.each do |c|
+        MISC_EV[eval(c.to_s)] = c if c =~ /^MSC_/
+      end
 
       #
       # LEDs
