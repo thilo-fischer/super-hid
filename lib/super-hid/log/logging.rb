@@ -1,5 +1,5 @@
 
-# Copyright (c) 2016  Thilo Fischer.
+# Copyright (c) 2017 Thilo Fischer.
 #
 # This file is part of super-hid.
 #
