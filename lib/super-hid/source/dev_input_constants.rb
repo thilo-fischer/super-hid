@@ -32,7 +32,7 @@ module SuperHid::Source
     # Defines constants from include/linux/input.h for Ruby code
     module Constants
 
-      def value(constant_name)
+      def self.value(constant_name)
         constant_name = constant_name.to_s if constant_name.is_a?(Symbol)
         raise "invalid argument" unless constant_name.is_a?(String)
         eval(constant_name)
@@ -664,6 +664,10 @@ module SuperHid::Source
       KEY_MAX			= 0x2ff
       KEY_CNT			= (KEY_MAX+1)
 
+      CODERANGE_KEYBOARD_KEY = KEY_RESERVED ... BTN_MISC
+      CODERANGE_MOUSE_BUTTON = BTN_MOUSE ... BTN_JOYSTICK
+      # more to be added when necessary ...
+      
       KEYS_AND_BTNS = {}
       constants.each do |c|
         KEYS_AND_BTNS[eval(c.to_s)] = c if c =~ /^(KEY|BTN)_/

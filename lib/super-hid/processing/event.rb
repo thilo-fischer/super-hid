@@ -17,12 +17,26 @@
 # You should have received a copy of the GNU General Public License
 # along with super-hid.  If not, see <http://www.gnu.org/licenses/>.
 
-raise "deprecated"
-
 module SuperHid::Processing
 
-  class EventFilter
-    
-  end # class EventFilter
+  ##
+  # Internal representation of events received from sources
+  class Event
 
-end # module SuperHid::Processing
+    attr_reader :source, :raw_data
+
+    def initialize(source, raw_data = nil)
+      @source = source
+      @raw_data = raw_data
+    end
+
+    ##
+    # Return true only if all data relevant for the according event is present.
+    # To be overridden by child classes.
+    def complete?
+      return false
+    end
+    
+  end # class Event
+  
+end #module SuperHid::Processing

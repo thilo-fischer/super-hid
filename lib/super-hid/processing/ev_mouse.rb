@@ -17,12 +17,34 @@
 # You should have received a copy of the GNU General Public License
 # along with super-hid.  If not, see <http://www.gnu.org/licenses/>.
 
-raise "deprecated"
+require 'super-hid/processing/event'
 
 module SuperHid::Processing
 
-  class EventFilter
-    
-  end # class EventFilter
-
-end # module SuperHid::Processing
+  ##
+  # Internal representation of events received from sources
+  class EvMouse < Event
+    attr_reader :x, :y
+    attr_accessor :buttons
+    #def initialize(source, raw_data = nil)
+    #  super(source, raw_data)
+    #end
+    def x=(arg)
+      raise unless @x == nil
+      @x = arg
+    end
+    def y=(arg)
+      raise unless @y == nil
+      @y = arg
+    end
+    def complete?
+      @x and @y
+    end
+    def to_s
+      s = "mouse x:#{@x} y:#{y}"
+      s += " buttons:#{@buttons}" if @buttons
+      s
+    end
+  end # class EvMouse
+  
+end #module SuperHid::Processing

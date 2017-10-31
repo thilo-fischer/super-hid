@@ -17,12 +17,37 @@
 # You should have received a copy of the GNU General Public License
 # along with super-hid.  If not, see <http://www.gnu.org/licenses/>.
 
-raise "deprecated"
+require 'super-hid/processing/event'
 
 module SuperHid::Processing
 
-  class EventFilter
-    
-  end # class EventFilter
-
-end # module SuperHid::Processing
+  ##
+  # Internal representation of events received from sources
+  class EvKeyboard < Event
+    attr_reader :key
+    def initialize(key, source, raw_data = nil)
+      super(source, raw_data)
+      @key = key
+    end
+    def complete?
+      return true
+    end
+  end # class EvKeyboard
+  
+  ##
+  # Internal representation of events received from sources
+  class EvKeyPress < EvKeyboard
+    def to_s
+      "keyboard press #{@key}"
+    end
+  end # class EvKeyboard
+  
+  ##
+  # Internal representation of events received from sources
+  class EvKeyRelease < EvKeyboard
+    def to_s
+      "keyboard release #{@key}"
+    end
+  end # class EvKeyboard
+  
+end #module SuperHid::Processing
