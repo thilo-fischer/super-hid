@@ -31,14 +31,19 @@ void setup() {
   pinMode(SWITCH_PIN, INPUT_PULLUP);
 }
 
+bool switch_state = false;
+
 void loop() {
+  bool new_sw_state = switch_pressed();
 
-  if (switch_pressed()) {
-    light_led(true);
-  } else {
-    light_led(false);
+  if (switch_state != new_sw_state) {
+    if (new_sw_state) {
+      light_led(true);
+    } else {
+      light_led(false);
+    }
+    switch_state = new_sw_state;
   }
-
    delay(50);
 }
 
