@@ -1,4 +1,7 @@
-// Turn on LED when switch connects pin 4 to GND.
+// Turn on LED and move mouse cursor to bottom right when switch connects pin 4 to GND.
+
+#include <HID-Project.h>
+#include <HID-Settings.h>
 
 // Original Arduino Micro has built-in LED connected to digital pin 13 (LED_BUILTIN).
 // The cheap Arduino Micro compatible board I use most of the times ("Pro-Micro-v11")
@@ -38,12 +41,20 @@ void loop() {
 
   if (switch_state != new_sw_state) {
     if (new_sw_state) {
+      // XXX run Mouse.begin() every time again when switch is getting pressed?
+      Mouse.begin();
       light_led(true);
     } else {
+      Mouse.end();
       light_led(false);
     }
     switch_state = new_sw_state;
   }
-   delay(50);
+
+  if (switch_state) {
+    Mouse.move(2, 2, 0);
+  }
+  
+  delay(100);
 }
 
