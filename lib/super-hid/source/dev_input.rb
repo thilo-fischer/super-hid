@@ -68,7 +68,8 @@ module SuperHid::Source
       end
     end # class Event
     
-    # FIXME padding? (platform specific to align with 32 or 64 bit?)
+    # FIXME sizeof(timeval) and padding bytes: platform specific
+    # https://en.wikipedia.org/wiki/Data_structure_alignment
     SIZEOF_TIMEVAL = 16 # FIXME platform specific
     SIZEOF_INT16 = 2
     SIZEOF_INT32 = 4
@@ -112,9 +113,15 @@ module SuperHid::Source
       sel_read.each do |dev_io|
         count = 0
         begin
-          binary = dev_io.read_nonblock(SIZEOF_INPUT_EVENT)
-          type, code, value = binary.unpack(INPUT_EVENT_UNPACK_FMTSTR)
-          events << Event.new(@@devices[dev_io], 0, type, code, value) # XXX time
+          while true
+            binary = dev_io.read_nonblock(SIZEOF_INPUT_EVENT)
+            byte_cnt = binary.length
+            $logger.warn("unexpected input: #{byte_cnt} bytes") if byte_cnt != SIZEOF_INPUT_EVENT
+            $logger.debug{"bytes %02d..%02d from %s: %s" % [ count, count + byte_cnt - 1, dev_io.to_s, binary.unpack("H*").first.each_char.each_slice(2).map{|s|s.join}.join(" ") ]}
+            type, code, value = binary.unpack(INPUT_EVENT_UNPACK_FMTSTR)
+            events << Event.new(@@devices[dev_io], 0, type, code, value) # XXX time
+            count += byte_cnt
+          end
         rescue SystemCallError
           # read_nonblock called and no data ready to be read
           $logger.warn "failed reading events from #{dev_io}" if count == 0
@@ -124,10 +131,6 @@ module SuperHid::Source
       $logger.debug{"#{events.length} new event(s): #{events.map{|e|e.to_s}.join(" ")}"}
       events
     end # def get_events
-
-    DEV_INPUT_TO_USB_HID_KEYS = {
-      
-    }
 
     def self.aggregate_events
       events = []
@@ -155,15 +158,15 @@ module SuperHid::Source
         cnk.each do |raw_ev|
           case raw_ev.type
           when :EV_SYN
-            raise if ev and not ev.complete?
+            $logger.warn("Incomplete event: #{ev.inspect}") if ev and not ev.complete?
             raise unless raw_ev.equal?(cnk.last)
           when :EV_KEY
             next if raw_ev.value == :repeat
             case Constants.value(raw_ev.code)
             when Constants::CODERANGE_KEYBOARD_KEY
               raise if ev
-              key = DEV_INPUT_TO_USB_HID_KEYS[raw_ev.code]
-              $logger.warn("Unsupported key: #{raw_ev.code}") and next unless key
+              key = raw_ev.code
+              $logger.warn("Unsupported key: #{raw_ev.code}") and next unless key and key.is_a?(Symbol)
               case raw_ev.value
               when :press
                 ev = SuperHid::Processing::EvKeyPress.new(key, raw_ev.source, cnk)

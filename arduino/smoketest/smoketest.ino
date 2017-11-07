@@ -4,8 +4,10 @@
 #include <HID-Settings.h>
 
 // Original Arduino Micro has built-in LED connected to digital pin 13 (LED_BUILTIN).
-// The cheap Arduino Micro compatible board I use most of the times ("Pro-Micro-v11")
-// has LED connected to digital pin 17
+// The cheap Arduino Micro compatible board I use most of the times (called "Pro Micro",
+// seems to be a clone of SparcFun Pro Micro, https://www.sparkfun.com/products/12640)
+// has LED connected to digital pin 17. We will always toggle pin 13 and pin 17 together
+// such that the code would switch the LED properly on either board.
 #define LED_BUILTIN_ALT 17
 
 // We will need pins 2 und 3 for I2C/TWI later on => use pin 4 for switch
