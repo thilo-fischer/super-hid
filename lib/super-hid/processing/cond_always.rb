@@ -17,5 +17,18 @@
 # You should have received a copy of the GNU General Public License
 # along with super-hid.  If not, see <http://www.gnu.org/licenses/>.
 
-require 'super-hid/processing/event_filter'
-require 'super-hid/processing/event_filter_standard'
+require 'singleton'
+
+module SuperHid::Processing
+
+  class CondAlways
+
+    include Singleton
+
+    def apply?(event)
+      true
+    end
+
+  end # class CondAlways
+  
+end # module SuperHid::Processing

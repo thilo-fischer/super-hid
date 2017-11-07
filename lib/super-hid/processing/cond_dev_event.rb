@@ -17,13 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with super-hid.  If not, see <http://www.gnu.org/licenses/>.
 
-raise "deprecated"
-
-require 'super-hid/processing/event_filter'
-
 module SuperHid::Processing
 
-  class EventFilterStandard < EventFilter
+  class CondDevEvent
 
     def initialize(types, codes, values)
       @types, @codes, @values = types, codes, values
@@ -78,6 +74,6 @@ module SuperHid::Processing
       end
     end
     
-  end # class EventFilterStandard
-
+  end # class CondDevEvent
+  
 end # module SuperHid::Processing

@@ -107,49 +107,6 @@ module SuperHid::Run
         opts.separator "Supported higher level conditions:"
         opts.separator "key-seq:<seq>     -> A specific sequence of keys was pressed on a keyboard."
 
-        #  types, codes, values = arg.split(':')
-        #  types = types.split(',').map do |arg|
-        #    arg.strip!
-        #    case arg
-        #    when /^\w+$/
-        #      arg
-        #    when /^\/.*\/$/
-        #      Regexp.new(arg)
-        #    else
-        #      raise "invalid event type specifier: `#{arg}'"
-        #    end
-        #  end
-        #  codes = codes.split(',').map do |arg|
-        #    arg.strip!
-        #    case arg
-        #    when /^\w+$/
-        #      arg
-        #    when /^\/.*\/$/
-        #      Regexp.new(arg)
-        #    when /^(0x)?\d$/
-        #      base = $1 ? 16 : 10
-        #      arg.to_i(base)
-        #    when /^(\w+|(0x)?\d)(\.\.\.?)(\w+|(0x)?\d)$/
-        #      raise "TODO: event code range from symbol or integer to symbol or integer"
-        #    else
-        #      raise "invalid event code specifier: `#{arg}'"
-        #    end
-        #  end if codes
-        #  values = values.split(',').map do |arg|
-        #    arg.strip!
-        #    case arg
-        #    when /^(0x)?\d$/
-        #      base = $1 ? 16 : 10
-        #      arg.to_i(base)
-        #    when /^((0x)?\d)(\.\.\.?)((0x)?\d)$/
-        #      raise "TODO: event value range"
-        #    else
-        #      raise "invalid event code specifier: `#{arg}'"
-        #    end
-        #  end if values
-        #  filters << EventFilterStandard.new(types, codes, values)
-        #end
-
         opts.separator ""
         opts.separator "Supported Operations:"
 
@@ -185,7 +142,7 @@ module SuperHid::Run
           @session.announce_source(src)
           sources << src
         when :when
-          conditions << SuperHid::Processing::Conditions.create(arg)
+          conditions << parse_condition(arg)
         when :then
           @session.add_operation(SuperHid::Processing::Operations.create(arg, sources, conditions))
         when :else
@@ -196,7 +153,68 @@ module SuperHid::Run
       end
 
     end # def parse
-    
+
+
+    def parse_condition(spec)
+      case (spec)
+      when 'always'
+        SuperHid::Processing::CondAlways.instance
+      when /^dev:(.*)$/
+        parse_cond_dev_event($1)
+      else
+        raise "Unknown condition specifier: `#{spec}'"
+      end
+      
+    end # def parse_condition
+
+    def parse_cond_dev_event(arg)
+      types, codes, values = arg.split(':')
+        
+        types = types.split(',').map do |arg|
+          arg.strip!
+          case arg
+          when /^\w+$/
+            arg
+          when /^\/.*\/$/
+            Regexp.new(arg)
+          else
+            raise "invalid event type specifier: `#{arg}'"
+          end
+        end
+      
+        codes = codes.split(',').map do |arg|
+          arg.strip!
+          case arg
+          when /^\w+$/
+            arg
+          when /^\/.*\/$/
+            Regexp.new(arg)
+          when /^(0x)?\d$/
+            base = $1 ? 16 : 10
+            arg.to_i(base)
+          when /^(\w+|(0x)?\d)(\.\.\.?)(\w+|(0x)?\d)$/
+            raise "TODO: event code range from symbol or integer to symbol or integer"
+          else
+            raise "invalid event code specifier: `#{arg}'"
+          end
+        end if codes
+        
+        values = values.split(',').map do |arg|
+          arg.strip!
+          case arg
+          when /^(0x)?\d$/
+            base = $1 ? 16 : 10
+            arg.to_i(base)
+          when /^((0x)?\d)(\.\.\.?)((0x)?\d)$/
+            raise "TODO: event value range"
+          else
+            raise "invalid event code specifier: `#{arg}'"
+          end
+        end if values
+        
+        SuperHid::Processing::CondDevEvent.create(types, codes, values)
+    end
+
   end # class CommandLineParser
 
 end # module SuperHid::Run

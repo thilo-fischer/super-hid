@@ -17,8 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with super-hid.  If not, see <http://www.gnu.org/licenses/>.
 
-#require 'super-hid/processing/cond_always'
-#require 'super-hid/processing/cond_dev_event'
+require 'super-hid/processing/cond_always'
+require 'super-hid/processing/cond_dev_event'
 
 module SuperHid::Processing
 
