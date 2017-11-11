@@ -3,6 +3,8 @@
 #include <HID-Project.h>
 #include <HID-Settings.h>
 
+#include <Wire.h>
+
 // Original Arduino Micro has built-in LED connected to digital pin 13 (LED_BUILTIN).
 // The cheap Arduino Micro compatible board I use most of the times (called "Pro Micro",
 // seems to be a clone of SparcFun Pro Micro, https://www.sparkfun.com/products/12640)
@@ -27,6 +29,17 @@ bool switch_pressed() {
   return digitalRead(SWITCH_PIN) == LOW;
 }
 
+void twi_rx(int count) {
+  static bool toggle = false;
+  toggle = ! toggle;
+  light_led(toggle);
+
+  while (1 < Wire.available()) { // loop through all but the last
+    char c = Wire.read(); // receive byte as a character
+  }
+  int x = Wire.read();    // receive byte as an integer
+}
+
 void setup() {
   // LED pins (original and alternative pin)
   pinMode(LED_BUILTIN, OUTPUT);
@@ -34,6 +47,9 @@ void setup() {
 
   // switch to GND pin
   pinMode(SWITCH_PIN, INPUT_PULLUP);
+
+  Wire.begin(' ');                // join i2c bus with address #32 (ASCII code for space)
+  Wire.onReceive(twi_rx);
 }
 
 bool switch_state = false;
