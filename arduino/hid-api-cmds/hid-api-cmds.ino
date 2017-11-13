@@ -54,14 +54,15 @@ void twi_rx(int count) {
       case DEV_INVALID:
       continue;
       case DEV_KBD:
+      case DEV_KBD_BOOT:
       {
       DefaultKeyboardAPI *dev = nullptr;
-      switch (cmd.dev_variant) {
-        case KBD_VAR_BOOT:
-        dev = &BootKeyboard;
-        break;
-        case KBD_VAR_IMPVD:
+      switch (cmd.dev_type) {
+        case DEV_KBD:
         dev = &Keyboard;
+        break;
+        case DEV_KBD_BOOT:
+        dev = &BootKeyboard;
         break;
         default:
         ; // todo: signal error
@@ -89,15 +90,16 @@ void twi_rx(int count) {
       }
       }
       case DEV_MOUSE:
+      case DEV_MOUSE_BOOT:
       {
       MouseAPI *dev = nullptr;
       
-      switch (cmd.dev_variant) {
-        case MOUSE_VAR_BOOT:
-        dev = &BootMouse;
-        break;
-        case KBD_VAR_IMPVD:
+      switch (cmd.dev_type) {
+        case DEV_MOUSE:
         dev = &Mouse;
+        break;
+        case DEV_MOUSE_BOOT:
+        dev = &BootMouse;
         break;
         default:
         ; // todo: signal error

@@ -2,13 +2,9 @@
 
 struct sCmd {
 
-  // Bit 0 to 2: device type: keyboard, mouse, absolute mouse, gamepad, ...
+  // Bit 0 to 4: device type: keyboard, mouse, absolute mouse, gamepad, ...
   // Value as defined by eDevType
- unsigned int dev_type : 3;
-
-  // Bit 3 to 4; device specific: variant; for keyboard device e.g. BootKeyboard, ImprovedKeyboard, NKRO-Keyboard ...
-  // Value as defined by eKbdVariant, eMouseVariant, eMiscVariant
-  unsigned int dev_variant : 2;
+ unsigned int dev_type : 5;
 
   // Bit 5 to 7; device specific: operation to perform; key press/release, mouse button press/release, mouse move, ...
   // Value as defined by eKbdOpcodes, eMouseOpcodes, ...
@@ -35,35 +31,17 @@ struct sCmd {
 
 
 enum eDevType {
-  DEV_INVALID   = 0,
-  DEV_KBD       = 1,
-  DEV_MOUSE     = 2,
-  DEV_ABS_MOUSE = 3,
-  DEV_GAMEPAD   = 4,
-  DEV_KBD_NKRO  = 5,
-  DEV_MISC      = 6, // Consumer, System, ...
-  DEV_RAW_HID   = 7
-};
-
-
-enum eKbdVariant {
-  KBD_VAR_BOOT      = 0,
-  KBD_VAR_IMPVD     = 1,
-  KBD_VAR_UNUSED0   = 2, // for future use
-  KBD_VAR_UNUSED1   = 3  // for future use
-};
-enum eMouseVariant {
-  MOUSE_VAR_BOOT    = 0,
-  MOUSE_VAR_IMPVD   = 1,
-  MOUSE_VAR_UNUSED0 = 2, // for future use
-  MOUSE_VAR_UNUSED1 = 3  // for future use
-};
-// ...
-enum eMiscVariant {
-  DEV_MISC_CONSUMER = 0,
-  DEV_MISC_SYSTEM   = 1,
-  DEV_MISC_UNUSED0  = 2, // for future use
-  DEV_MISC_UNUSED1  = 3  // for future use
+  DEV_INVALID    = 0x00,
+  DEV_KBD        = 0x01,
+  DEV_KBD_BOOT   = 0x02,
+  DEV_KBD_NKRO   = 0x03,
+  DEV_MOUSE      = 0x04,
+  DEV_MOUSE_BOOT = 0x05,
+  DEV_MOUSE_ABS  = 0x06,
+  DEV_GAMEPAD    = 0x07,
+  DEV_CONSUMER   = 0x08,
+  DEV_SYSTEM     = 0x09,
+  DEV_RAW_HID    = 0x1F
 };
 
 
