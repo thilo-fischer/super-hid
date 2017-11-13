@@ -5,6 +5,8 @@
 
 #include <Wire.h>
 
+#include "interface.h"
+
 // Original Arduino Micro has built-in LED connected to digital pin 13 (LED_BUILTIN).
 // The cheap Arduino Micro compatible board I use most of the times (called "Pro Micro",
 // seems to be a clone of SparcFun Pro Micro, https://www.sparkfun.com/products/12640)
@@ -52,21 +54,19 @@ void twi_rx(int count) {
       case DEV_INVALID:
       continue;
       case DEV_KBD:
+      {
       DefaultKeyboardAPI *dev = nullptr;
-      switch (cmd.dev_variant.kbb) {
+      switch (cmd.dev_variant) {
         case KBD_VAR_BOOT:
         dev = &BootKeyboard;
         break;
         case KBD_VAR_IMPVD:
         dev = &Keyboard;
         break;
-        case KBD_VAR_NKRO:
-        dev = &NKROKeyboard;
-        break;
         default:
-        // todo: signal error
+        ; // todo: signal error
       }      
-      switch (cmd.op_code.kbd) {
+      switch (cmd.op_code) {
         case OP_KBD_BEGIN:
         dev->begin();
         break;
@@ -85,11 +85,14 @@ void twi_rx(int count) {
         dev->end();
         break;
         default:
-        // todo: signal error
+        ; // todo: signal error
+      }
       }
       case DEV_MOUSE:
+      {
       MouseAPI *dev = nullptr;
-      switch (cmd.dev_variant.mouse) {
+      
+      switch (cmd.dev_variant) {
         case MOUSE_VAR_BOOT:
         dev = &BootMouse;
         break;
@@ -97,41 +100,45 @@ void twi_rx(int count) {
         dev = &Mouse;
         break;
         default:
-        // todo: signal error
+        ; // todo: signal error
       }      
-      switch (cmd.op_code.mouse) {
+      switch (cmd.op_code) {
         case OP_MOUSE_BEGIN:
         dev->begin();
         break;
         case OP_MOUSE_MOVE:
+        {
         cmd.data.mouse_mv.x = Wire.read();
         cmd.data.mouse_mv.y = Wire.read();        
         int8_t wheel_dummy = 0;
         dev->move(cmd.data.mouse_mv.x, cmd.data.mouse_mv.y, wheel_dummy);
         break;
-        case OP_KBD_PRESS:
+        }
+        case OP_MOUSE_PRESS:
         cmd.data.mouse_btn.button = Wire.read();
         dev->press(cmd.data.mouse_btn.button);
         break;
-        case OP_KBD_RELEASE:
+        case OP_MOUSE_RELEASE:
         cmd.data.mouse_btn.button = Wire.read();
         dev->release(cmd.data.mouse_btn.button);
         break;
-        case OP_KBD_WHEEL:
+        case OP_MOUSE_WHEEL:
+        {
         cmd.data.mouse_wheel.val = Wire.read();        
         int8_t x_dummy = 0;
         int8_t y_dummy = 0;
         dev->move(x_dummy, y_dummy, cmd.data.mouse_wheel.val);
         break;
-        case OP_KBD_END:
+        }
+        case OP_MOUSE_END:
         dev->end();
         break;
         default:
-        // todo: signal error
+        ; // todo: signal error
       }
-      
+      }
       default:
-      // todo: signal not yet supported or error
+      ; // todo: signal not yet supported or error
     }
   }
 }
