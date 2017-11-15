@@ -12,21 +12,27 @@ struct sCmd {
 
   // following bytes: device and operation specific values
   union uOperationParameters {
+    // OP_KBD_BEGIN, OP_KBD_REL_ALL, OP_KBD_END, OP_MOUSE_BEGIN, OP_MOUSE_END
+    struct {} empty;
+    // OP_KBD_PRESS, OP_KBD_RELEASE
     struct {
       uint8_t keycode;
     } kbd_key;
+    // OP_MOUSE_PRESS, OP_MOUSE_RELEASE
     struct {
       uint8_t button;
     } mouse_btn;
+    // OP_MOUSE_MOVE
     struct {
       int8_t x;
       int8_t y;
     } mouse_mv;
+    // OP_MOUSE_WHEEL
     struct {
       int8_t val;
     } mouse_wheel;
     // ...
-  } data;
+  } param;
 };
 
 

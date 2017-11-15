@@ -72,12 +72,12 @@ void twi_rx(int count) {
         dev->begin();
         break;
         case OP_KBD_PRESS:
-        cmd.data.kbd_key.keycode = Wire.read();
-        dev->press(cmd.data.kbd_key.keycode);
+        cmd.param.kbd_key.keycode = Wire.read();
+        dev->press(cmd.param.kbd_key.keycode);
         break;
         case OP_KBD_RELEASE:
-        cmd.data.kbd_key.keycode = Wire.read();
-        dev->release(cmd.data.kbd_key.keycode);
+        cmd.param.kbd_key.keycode = Wire.read();
+        dev->release(cmd.param.kbd_key.keycode);
         break;
         case OP_KBD_REL_ALL:
         dev->releaseAll();
@@ -110,26 +110,26 @@ void twi_rx(int count) {
         break;
         case OP_MOUSE_MOVE:
         {
-        cmd.data.mouse_mv.x = Wire.read();
-        cmd.data.mouse_mv.y = Wire.read();        
+        cmd.param.mouse_mv.x = Wire.read();
+        cmd.param.mouse_mv.y = Wire.read();        
         int8_t wheel_dummy = 0;
-        dev->move(cmd.data.mouse_mv.x, cmd.data.mouse_mv.y, wheel_dummy);
+        dev->move(cmd.param.mouse_mv.x, cmd.param.mouse_mv.y, wheel_dummy);
         break;
         }
         case OP_MOUSE_PRESS:
-        cmd.data.mouse_btn.button = Wire.read();
-        dev->press(cmd.data.mouse_btn.button);
+        cmd.param.mouse_btn.button = Wire.read();
+        dev->press(cmd.param.mouse_btn.button);
         break;
         case OP_MOUSE_RELEASE:
-        cmd.data.mouse_btn.button = Wire.read();
-        dev->release(cmd.data.mouse_btn.button);
+        cmd.param.mouse_btn.button = Wire.read();
+        dev->release(cmd.param.mouse_btn.button);
         break;
         case OP_MOUSE_WHEEL:
         {
-        cmd.data.mouse_wheel.val = Wire.read();        
+        cmd.param.mouse_wheel.val = Wire.read();        
         int8_t x_dummy = 0;
         int8_t y_dummy = 0;
-        dev->move(x_dummy, y_dummy, cmd.data.mouse_wheel.val);
+        dev->move(x_dummy, y_dummy, cmd.param.mouse_wheel.val);
         break;
         }
         case OP_MOUSE_END:
