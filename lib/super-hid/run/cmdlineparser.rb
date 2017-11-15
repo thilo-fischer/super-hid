@@ -110,11 +110,11 @@ module SuperHid::Run
         opts.separator ""
         opts.separator "Supported Operations:"
 
-        opts.separator("nop         -> No-operation: Don't do anything, is always successful.")
+        opts.separator("nop           -> No-operation: Don't do anything, is always successful.")
         opts.separator("log[:verbose] -> Print information about the event to stdout or log file; print greater amount of information if `:verbose' is given.")
+        opts.separator("send[:<spec>]     -> Send events to target computer as specificed by <spec>. <spec> shall have the format: `interface:protocol:address'. If `:<spec>' is omnitted, the default `i2c:hid-api-cmds:16' is used, i.e. the events are sent via I2C bus using the format defined by the Arduino sketch `hid-api-cmds' to I2C device with address 16. Single elements of the spec may be left away and the according default values will be used, e.g. `send:::32' will send via I2C according to `hid-api-cmds' to I2C device with address 32.")
+        opts.separator("kbd-layout-translate:<FROM>:<TO> -> Interpret input from connected keyboards according to X11 kbd layout given as FROM and send keys to target system according to X11 kbd layout given as TO.")
         opts.separator("generate:<output> -> Simulate events specified by <output>.")
-        opts.separator("forward     -> Forward events. (Useful to set up filters that drop certain events.)")
-        opts.separator("kbd-layout-translate:FROM:TO -> Interpret input from connected keyboards according to X11 kbd layout given as FROM and send keys to target system according to X11 kbd layout given as TO.")
         opts.separator("QUIT        -> quit super-hid process.")
 
         opts.separator ""
@@ -224,6 +224,35 @@ module SuperHid::Run
         SuperHid::Processing::Operation.new
       when /^log(:verbose)?$/
         SuperHid::Processing::OperationLog.new($1)
+      when "send(:(.*):(.*):(.*))?"
+        interface = $2
+        case interface
+        when nil, ""
+          interface = :i2c
+        when "i2c"
+          interface = interface.to_sym
+        else
+          raise "unknown interface: `#{interface}'"
+        end
+        protocol = $3
+        case protocol
+        when nil, ""
+          protocol = :hid_api_cmds
+        when "hid-api-cmds"
+          protocol = protocol.to_sym
+        else
+          raise "unknown protocol: `#{protocol}'"
+        end
+        address = $4
+        case address
+        when nil, ""
+          address = 0x10
+        when /^\d+$/
+          address = address.to_i
+        else
+          raise "unknown address: `#{address}'"
+        end
+        SuperHid::Processing::OperationSend.new(interface, protocol, address)
       when /^kbd-layout-translate:(.*):(.*)$/
         from_layout = $1
         to_layout = $2

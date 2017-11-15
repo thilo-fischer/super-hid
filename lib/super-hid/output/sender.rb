@@ -17,24 +17,39 @@
 # You should have received a copy of the GNU General Public License
 # along with super-hid.  If not, see <http://www.gnu.org/licenses/>.
 
-require 'super-hid/processing/operation'
-require 'super-hid/output/sender'
+require 'super-hid/output/interface_i2c'
+require 'super-hid/output/protocol_hid-api-cmds'
 
-module SuperHid::Processing
+module SuperHid::Output
 
-  class OperationSend < Operation
+  class Sender
 
     def initialize(interface, protocol, address)
       #@interface = interface
       #@protocol = protocol
       #@address = address
-      @sender = Sender.new(interface, protocol, address)
+      setup(interface, protocol, address)
     end
-    
-    def process(event)
-      @sender.send(event)
-    end
-    
-  end # class OperationSend
 
-end # module SuperHid::Processing
+    def setup(interface, protocol, address)
+      case interface
+      when :i2c
+        @interface = InterfaceI2c.new(address)
+      else
+        raise
+      end
+      case protocol
+      when :hid_api_cmds
+        @protocol = ProtocolHidApiCmds.new
+      else
+        raise
+      end
+    end
+    
+    def send(event)
+      @interface.send(@protocol.encode(event))
+    end
+    
+  end # class Sender
+
+end # module SuperHid::Output

@@ -19,6 +19,6 @@
 
 require 'super-hid/processing/operation'
 require 'super-hid/processing/operation_log'
-require 'super-hid/processing/operation_forward'
+require 'super-hid/processing/operation_send'
 require 'super-hid/processing/operation_kbd_layout_translate'
 require 'super-hid/processing/operation_quit'

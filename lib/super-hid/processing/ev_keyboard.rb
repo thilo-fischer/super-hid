@@ -21,6 +21,10 @@ require 'super-hid/processing/event'
 
 module SuperHid::Processing
 
+  HID_USAGE_ID = {
+    
+  }
+  
   ##
   # Internal representation of events received from sources
   class EvKeyboard < Event
@@ -31,6 +35,15 @@ module SuperHid::Processing
     end
     def complete?
       return true
+    end
+    ##
+    # usage ID code of key according to "USB HID Usage Tables v1.12" (Hut1_12v2) 0x07
+    def hid_usage_id
+      if HID_USAGE_ID.key?(@key)
+        HID_USAGE_ID[@key]
+      else
+        $logger.warn("Ignoring unsupported key: `#{@key}'")
+      end
     end
   end # class EvKeyboard
   

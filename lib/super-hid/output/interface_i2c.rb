@@ -17,24 +17,30 @@
 # You should have received a copy of the GNU General Public License
 # along with super-hid.  If not, see <http://www.gnu.org/licenses/>.
 
-require 'super-hid/processing/operation'
-require 'super-hid/output/sender'
+require 'super-hid/helper'
 
-module SuperHid::Processing
+module SuperHid::Output
 
-  class OperationSend < Operation
+  class InterfaceI2c
 
-    def initialize(interface, protocol, address)
-      #@interface = interface
-      #@protocol = protocol
-      #@address = address
-      @sender = Sender.new(interface, protocol, address)
+    def initialize(address)
+      @address = address
+      setup
     end
     
-    def process(event)
-      @sender.send(event)
+    IOCLT_CODE_I2C_SLAVE = 0x0703
+
+    def setup
+      i2cbus = 1 # for raspberry pi version 2 and later (?) -- FIXME make configurable
+      @file = File.open("/dev/i2c-#{i2cbus}", "r+b")
+      @file.ioctl(IOCLT_CODE_I2C_SLAVE, @address)
     end
     
-  end # class OperationSend
+    def send(payload)
+      $logger.debug{"write to `#{@file.path}': #{hexdump(payload)}"}
+      @file.write(payload)
+    end
+    
+  end # class InterfaceI2c
 
-end # module SuperHid::Processing
+end # module SuperHid::Output

@@ -1,5 +1,7 @@
 // Defines the data structures to be transferred via I2C
 
+// Keep in syc with lib/super-hid/output/protocol_hid-api-cmds.rb !!
+
 struct sCmd {
 
   // Bit 0 to 4: device type: keyboard, mouse, absolute mouse, gamepad, ...
