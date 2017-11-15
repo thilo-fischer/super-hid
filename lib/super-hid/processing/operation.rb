@@ -21,10 +21,11 @@ module SuperHid::Processing
 
   class Operation
 
-    def initialize(sources, conditions)
-      @sources = sources
-      @conditions = conditions
-    end
+    #def initialize(sources, conditions)
+    #  @sources = sources
+    #  @conditions = conditions
+    #end
+    attr_accessor :sources, :conditions
 
     ##
     # Test if operation applies to event. If so, process event.

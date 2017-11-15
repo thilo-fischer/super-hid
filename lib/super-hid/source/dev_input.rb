@@ -23,6 +23,8 @@ require 'super-hid/source/dev_input_constants'
 require 'super-hid/processing/ev_keyboard'
 require 'super-hid/processing/ev_mouse'
 
+require 'super-hid/helper'
+
 module SuperHid::Source
 
   ##
@@ -76,14 +78,11 @@ module SuperHid::Source
     SIZEOF_INPUT_EVENT = SIZEOF_TIMEVAL + SIZEOF_INT16 + SIZEOF_INT16 + SIZEOF_INT32
     INPUT_EVENT_UNPACK_FMTSTR = "@#{SIZEOF_TIMEVAL}SSl"
 
-    attr_reader :path
-
     @@devices = {}
 
     @@ev_queue = []
     
     def initialize(path)
-      @path = path
       @io = File.open(path)
       @@devices[@io] = self
     end # def initialize
@@ -106,6 +105,7 @@ module SuperHid::Source
       sel = IO.select(@@devices.keys)
       sel_read = sel[0]
 
+      #$logger.debug("input events available at #{sel_read.path}")
       #$logger.debug("input events available at #{sel_read.inspect}")
 
       events = []
@@ -117,7 +117,7 @@ module SuperHid::Source
             binary = dev_io.read_nonblock(SIZEOF_INPUT_EVENT)
             byte_cnt = binary.length
             $logger.warn("unexpected input: #{byte_cnt} bytes") if byte_cnt != SIZEOF_INPUT_EVENT
-            $logger.debug{"bytes %02d..%02d from %s: %s" % [ count, count + byte_cnt - 1, dev_io.to_s, binary.unpack("H*").first.each_char.each_slice(2).map{|s|s.join}.join(" ") ]}
+            $logger.debug{"bytes %02d..%02d from %s: %s" % [ count, count + byte_cnt - 1, dev_io.path, SuperHid::Helper.hexdump(binary) ]}
             type, code, value = binary.unpack(INPUT_EVENT_UNPACK_FMTSTR)
             events << Event.new(@@devices[dev_io], 0, type, code, value) # XXX time
             count += byte_cnt

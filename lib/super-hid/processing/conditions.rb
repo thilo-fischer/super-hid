@@ -19,27 +19,3 @@
 
 require 'super-hid/processing/cond_always'
 require 'super-hid/processing/cond_dev_event'
-
-module SuperHid::Processing
-
-  module Conditions
-
-    def self.create(spec)
-      case spec
-      when String
-        case spec
-        when "always"
-          CondAlways.instance
-        when /^dev:(.*)$/
-          type, code, value = $1.split(':')
-          CondDevEvent.new(type, code, value)
-        else
-          raise "invalid condition spec: #{spec}"
-        end
-      else
-        raise "unsupported condition spec: #{spec.inspect}"
-      end
-    end
-
-  end # module Conditions
-end # module SuperHid::Processing

@@ -46,7 +46,7 @@ module SuperHid::Run
       option_parser = OptionParser.new do |opts|
         
         opts.banner =
-          "Usage: #{File.basename $0} ( <operation> ... ) | ( ( --config <config-file> ... ) | ( [ --from <source> ... ] [ --when <condition> ... ] --then <operation> ... [ [ --else ] [ --when <condition> ... ] --then <operation> ... ] ) ) ..."
+          "Usage: #{File.basename $0} ( <operation> ... ) | ( ( --config <config-file> ... ) | ( [ --from <source> ... ] [ --when <condition> ... ] --then <operation> ( [ --else ] <operation>) ... [ [ [ --else ] --when <condition> ... ] --then <operation> ... ] ) ) ..."
         
 	opts.on("--config",
                 "Read configuration parameters and operation rules from the following config files.") do
@@ -144,7 +144,10 @@ module SuperHid::Run
         when :when
           conditions << parse_condition(arg)
         when :then
-          @session.add_operation(SuperHid::Processing::Operations.create(arg, sources, conditions))
+          operation = parse_operation(arg)
+          operation.sources = sources
+          operation.conditions = conditions
+          @session.add_operation(operation)
         when :else
           raise "not yet implemented"
         else
@@ -213,8 +216,25 @@ module SuperHid::Run
         end if values
         
         SuperHid::Processing::CondDevEvent.create(types, codes, values)
-    end
+    end # def parse_cond_dev_event
 
+    def parse_operation(arg)
+      case arg
+      when "nop"
+        SuperHid::Processing::Operation.new
+      when /^log(:verbose)?$/
+        SuperHid::Processing::OperationLog.new($1)
+      when /^kbd-layout-translate:(.*):(.*)$/
+        from_layout = $1
+        to_layout = $2
+        SuperHid::Processing::OperationKbdLayoutTranslate.new(from_layout, to_layout)
+      when "QUIT"
+        SuperHid::Processing::OperationQuit.new
+      else
+        raise "invalid operation spec: #{arg}"
+      end
+    end # def parse_operation
+    
   end # class CommandLineParser
 
 end # module SuperHid::Run

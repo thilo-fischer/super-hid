@@ -17,25 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with super-hid.  If not, see <http://www.gnu.org/licenses/>.
 
-require 'super-hid/processing/operation'
+module SuperHid::Helper
 
-module SuperHid::Processing
-
-  class OperationLog < Operation
-
-    def initialize(verbose) #sources, conditions, verbose)
-      #super(sources, conditions)
-      @verbose = verbose ? true : false
-    end
-
-    def process(event)
-      if @verbose
-        $logger.info("new event: #{event.inspect}")
-      else
-        $logger.info("new event: #{event}")
-      end
-    end
-    
-  end # class Operation
-
-end # module SuperHid::Processing
+  def self.hexdump(data)
+    data.unpack("H*").first.each_char.each_slice(2).map{|s|s.join}.join(" ")
+  end
+  
+end # module SuperHid::Helper
