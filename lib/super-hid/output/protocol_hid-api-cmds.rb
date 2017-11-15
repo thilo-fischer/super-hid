@@ -21,6 +21,65 @@ module SuperHid::Output
 
   class ProtocolHidApiCmds
 
+    def encode(event)
+      result = []
+      
+      case event
+      when EvKbdKey
+        dev_type = :DEV_KBD_BOOT
+        op_code = nil
+        case event.action
+        when :press
+          op_code = :OP_KBD_PRESS
+        when :release
+          op_code = :OP_KBD_RELEASE
+        else
+          raise "unsupproted event action: #{event.inspect}"
+        end
+        params = [ event.hid_usage_id ]
+        result = [ encode_single(dev_type, op_code, params) ]
+      when EvMouse
+        dev_type = :DEV_MOUSE
+        # XXX What about BootMouse?
+        if event.move?
+          op_code = :OP_MOUSE_MOVE
+          params = [ event.x, event.y ]
+          result.push_back(encode_single(dev_type, op_code, params))
+        end
+        if event.buttons
+          buttons.each do |id, action|
+            op_code = nil
+            case action
+            when :press
+              op_code = :OP_MOUSE_PRESS
+            when :release
+              op_code = :OP_MOUSE_RELEASE
+            else
+              raise "invalid event: #{event.inspect}"
+            end
+            params = [ id ]
+            result.push_back(encode_single(dev_type, op_code, params))
+          end
+        end
+        if event.wheel
+          op_code = :OP_MOUSE_WHEEL
+          params = [ event.wheel ]
+          result.push_back(encode_single(dev_type, op_code, params))          
+        end
+      else
+        raise "unsupproted event: #{event.inspect}"
+      end
+
+      data = [ DEV_TYPES[dev_type] << 3 | OP_CODES[op_code] ]
+      data.concat(params)
+      data.pack(PACK_FMT_STRS[op_code])
+
+      result
+      
+    end # def encode
+
+    private
+
     # Keep in sync with Arduino/hid-api-cmds/interface.h !!
     
     DEV_TYPES = {
@@ -69,36 +128,15 @@ module SuperHid::Output
       :OP_MOUSE_END     => "C",
     }
 
-    def encode(event)
-      
-      param = []
-      dev_type = nil
-      op_code = nil
-      
-      case event
-      when EvKeyboard
-        dev_type = :DEV_KBD_BOOT
-      when EvMouse
-        dev_type = :DEV_MOUSE
-      else
-        raise "unsupproted event: #{event.inspect}"
-      end
-      case event
-      when EvKeyPress
-        op_code = :OP_KBD_PRESS
-        param = [ event.hid_usage_id ]
-      when EvKeyRelease
-        op_code = :OP_KBD_RELEASE
-        param = [ event.hid_usage_id ]
-      else
-        raise "unsupproted event: #{event.inspect}"
-      end
-
+    def encode_single(dev_type, op_code, params)
       data = [ DEV_TYPES[dev_type] << 3 | OP_CODES[op_code] ]
       data.concat(params)
-      data.pack(PACK_FMT_STRS[op_code])
-      
-    end # def encode
+      data.pack(PACK_FMT_STRS[op_code])      
+    end
+
+    def encode_dev_op(dev_type, op_code)
+      DEV_TYPES[dev_type] << 3 | OP_CODES[op_code]
+    end
     
   end # class ProtocolHidApiCmds
 

@@ -22,27 +22,53 @@ require 'super-hid/processing/event'
 module SuperHid::Processing
 
   ##
-  # Internal representation of events received from sources
+  # Base class for all mouse related events
   class EvMouse < Event
-    attr_reader :x, :y
-    attr_accessor :buttons
-    #def initialize(source, raw_data = nil)
-    #  super(source, raw_data)
-    #end
+    attr_reader :x, :y, :buttons, :wheel
+    def initialize(source, raw_data = nil)
+      super(source, raw_data)
+    end
     def x=(arg)
-      raise unless @x == nil
+      raise if @x
       @x = arg
     end
     def y=(arg)
-      raise unless @y == nil
+      raise if @y
       @y = arg
     end
     def complete?
+      (@x and @y) or @buttons or @wheel
+    end
+    ##
+    # add mouse movement information
+    def move(x, y)
+      @x = x
+      @y = y
+    end
+    def move?
       @x and @y
     end
+    ##
+    # add button press or button release information
+    # +id+:: identifies the button whose state changes
+    # +action+:: +:press+ or +:release+
+    def button(id, action)
+      @buttons ||= {}
+      raise if @buttons.key?(id)
+      @buttons[id] = action
+    end
+    ##
+    # add mouse wheel information
+    def wheel=(arg)
+      raise if @wheel
+      @wheel = arg
+    end
     def to_s
-      s = "mouse x:#{@x} y:#{y}"
-      s += " buttons:#{@buttons}" if @buttons
+      s = "mouse "
+      s += "(move x:#{@x} y:#{y}) " if @x or @y
+      s += "(buttons:#{@buttons}) " if @buttons
+      s += "(wheel:#{@wheel}) " if @wheel
+      s.chop!
       s
     end
   end # class EvMouse

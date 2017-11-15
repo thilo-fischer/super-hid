@@ -167,14 +167,7 @@ module SuperHid::Source
               raise if ev
               key = raw_ev.code
               $logger.warn("Unsupported key: #{raw_ev.code}") and next unless key and key.is_a?(Symbol)
-              case raw_ev.value
-              when :press
-                ev = SuperHid::Processing::EvKeyPress.new(key, raw_ev.source, cnk)
-              when :release
-                ev = SuperHid::Processing::EvKeyRelease.new(key, raw_ev.source, cnk)
-              else
-                raise
-              end
+              ev = SuperHid::Processing::EvKbdKey.new(key, raw_ev.value, raw_ev.source, cnk)
             when Constants::CODERANGE_MOUSE_BUTTON
               if ev == nil
                 ev = SuperHid::Processing::EvMouse.new(raw_ev.source, cnk)
