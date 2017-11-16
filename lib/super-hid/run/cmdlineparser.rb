@@ -133,6 +133,11 @@ module SuperHid::Run
 
       end # OptionParser.new
 
+      if ARGV.empty?
+        puts(option_parser)
+        exit(false)
+      end
+
       option_parser.order(ARGV) do |arg|
         case state
         when :config
