@@ -69,14 +69,22 @@ module SuperHid::Source
         "#{@type}:#{@code}:#{@value}"
       end
     end # class Event
-    
-    # FIXME sizeof(timeval) and padding bytes: platform specific
-    # https://en.wikipedia.org/wiki/Data_structure_alignment
-    SIZEOF_TIMEVAL = 16 # FIXME platform specific
+
+    # struct input_event is defined by linux/input.h as:
+    #  struct input_event {
+    #    struct timeval time;
+    #    __u16 type;
+    #    __u16 code;
+    #    __s32 value;
+    #  };
+    # and stuct timeval is typically two long values for seconds and micro seconds.
+    #
+    # TODO platform specific padding bytes (?) => https://en.wikipedia.org/wiki/Data_structure_alignment
+    SIZEOF_TIMEVAL = 2 * [0].pack('l_').size # twice the size of platform specific long values
     SIZEOF_INT16 = 2
     SIZEOF_INT32 = 4
     SIZEOF_INPUT_EVENT = SIZEOF_TIMEVAL + SIZEOF_INT16 + SIZEOF_INT16 + SIZEOF_INT32
-    INPUT_EVENT_UNPACK_FMTSTR = "@#{SIZEOF_TIMEVAL}SSl"
+    INPUT_EVENT_UNPACK_FMTSTR = "l_l_SSl" # native long, native long, unsigned 16-bit, unsigned 16-bit, signed 32-bit
 
     @@devices = {}
 
@@ -118,8 +126,8 @@ module SuperHid::Source
             byte_cnt = binary.length
             $logger.warn("unexpected input: #{byte_cnt} bytes") if byte_cnt != SIZEOF_INPUT_EVENT
             $logger.debug{"bytes %02d..%02d from %s: %s" % [ count, count + byte_cnt - 1, dev_io.path, SuperHid::Helper.hexdump(binary) ]}
-            type, code, value = binary.unpack(INPUT_EVENT_UNPACK_FMTSTR)
-            events << Event.new(@@devices[dev_io], 0, type, code, value) # XXX time
+            seconds, useconds, type, code, value = binary.unpack(INPUT_EVENT_UNPACK_FMTSTR)
+            events << Event.new(@@devices[dev_io], seconds + (useconds*0.000001), type, code, value)
             count += byte_cnt
           end
         rescue SystemCallError
