@@ -147,7 +147,8 @@ module SuperHid::Source
 
       # Enumerable.slice_after requires Ruby v2.2.0 or grater
       if Array.public_method_defined?(:slice_after)
-        chunks = @@ev_queue.slice_after {|e| e.type == :EV_SYN }
+        # XXX using Enumerable#to_a here and Array#each on (parts of) the resulting array later smells (but is currently the least work to have fallback code for Ruby pre-v2.2.0 in place)
+        chunks = @@ev_queue.slice_after {|e| e.type == :EV_SYN }.to_a
 
         if chunks.last.last.type == :EV_SYN
           @@ev_queue = []
