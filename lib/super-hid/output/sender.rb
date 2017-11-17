@@ -24,6 +24,37 @@ module SuperHid::Output
 
   class Sender
 
+    @@pool = {}
+
+    def self.acquire(interface, protocol, address)
+      find_instance(interface, protocol, address) or self.new(interface, protocol, address)
+    end
+
+    def self.find_instance(interface, protocol, address)
+      if @@pool.key?(interface) and
+         @@pool[interface].key?(protocol) and
+         @@pool[interface][protocol].key?(address)
+        @@pool[interface][protocol][address]
+      end
+    end
+
+    def self.teardown_instances
+      @@pool.each do |if_sym, protocol_map|
+        protocol_map.each do |protocol_sym, addr_map|
+          addr_map.each do |addr, sender|
+            sender.teardown
+          end
+        end
+      end
+    end
+
+    def add_to_pool
+      @@pool[@interface.SYMBOL] = {} unless @@pool.key?(interface)
+      @@pool[@interface.SYMBOL][@protocol.SYMBOL] = {} unless @@pool[interface].key?(protocol)
+      raise "sender instance already exists: #{self.inspect}" if @@pool[@interface.SYMBOL][@protocol.SYMBOL].key?(address)
+      @@pool[@interface.SYMBOL][@protocol.SYMBOL][address] = self
+    end
+
     def initialize(interface, protocol, address)
       #@interface = interface
       #@protocol = protocol
@@ -33,17 +64,27 @@ module SuperHid::Output
 
     def setup(interface, protocol, address)
       case interface
-      when :i2c
+      when InterfaceI2c::SYMBOL
         @interface = InterfaceI2c.new(address)
       else
         raise
       end
       case protocol
-      when :hid_api_cmds
+      when ProtocolHidApiCmds::SYMBOL
         @protocol = ProtocolHidApiCmds.new
       else
         raise
       end
+      
+      add_to_pool
+
+      @interface.send(@protocol.start)
+    end
+
+    def teardown
+      @interface.send(@protocol.stop)
+      @protocol.teardown
+      @interface.teardown
     end
     
     def send(event)

@@ -40,6 +40,7 @@ module SuperHid::Run
       
       $logger.debug("** Session: #{@session.inspect}")
 
+
       while true do
 
         # For now: only one source, DevInput.
@@ -54,6 +55,8 @@ module SuperHid::Run
         end
         
       end
+
+      Sender.teardown_instances
 
     end # def run
 

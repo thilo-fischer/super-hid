@@ -23,6 +23,10 @@ module SuperHid::Output
 
   class InterfaceI2c
 
+    SYMBOL = :i2c
+
+    attr_reader :address
+
     def initialize(address)
       @address = address
       setup

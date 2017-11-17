@@ -21,6 +21,8 @@ module SuperHid::Output
 
   class ProtocolHidApiCmds
 
+    SYMBOL = :hid_api_cmds
+
     def encode(event)
       result = []
       
@@ -124,7 +126,7 @@ module SuperHid::Output
       :OP_MOUSE_END     => "C",
     }
 
-    def encode_single(dev_type, op_code, params)
+    def encode_single(dev_type, op_code, params = [])
       data = [ DEV_TYPES[dev_type] << 3 | OP_CODES[op_code] ]
       data.concat(params)
       data.pack(PACK_FMT_STRS[op_code])      
@@ -132,6 +134,18 @@ module SuperHid::Output
 
     def encode_dev_op(dev_type, op_code)
       DEV_TYPES[dev_type] << 3 | OP_CODES[op_code]
+    end
+
+    # XXX Trigger HID API begin functions only for those devices
+    # specifically required, e.g. don't trigger :OP_MOUSE_BEGIN if only
+    # keyboard sources and operations are involved.
+    # XXX Allow to chose between Mouse and BootMouse etc.
+    def start
+      [ encode_single(:DEV_KBD_BOOT, :OP_KBD_BEGIN), encode_single(:DEV_MOUSE, :OP_MOUSE_BEGIN) ]
+    end
+    
+    def stop
+      [ encode_single(:DEV_KBD_BOOT, :OP_KBD_END), encode_single(:DEV_MOUSE, :OP_MOUSE_END) ]
     end
     
   end # class ProtocolHidApiCmds
