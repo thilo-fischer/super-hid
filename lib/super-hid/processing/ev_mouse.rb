@@ -24,20 +24,26 @@ module SuperHid::Processing
   ##
   # Base class for all mouse related events
   class EvMouse < Event
-    attr_reader :x, :y, :buttons, :wheel
+    attr_reader :buttons, :wheel
     def initialize(source, raw_data = nil)
       super(source, raw_data)
+    end
+    def x
+      @x or 0
     end
     def x=(arg)
       raise if @x
       @x = arg
+    end
+    def y
+      @y or 0
     end
     def y=(arg)
       raise if @y
       @y = arg
     end
     def complete?
-      (@x and @y) or @buttons or @wheel
+      @x or @y or @buttons or @wheel
     end
     ##
     # add mouse movement information
@@ -46,7 +52,7 @@ module SuperHid::Processing
       @y = y
     end
     def move?
-      @x and @y
+      @x or @y
     end
     ##
     # add button press or button release information
@@ -65,7 +71,7 @@ module SuperHid::Processing
     end
     def to_s
       s = "mouse "
-      s += "(move x:#{@x} y:#{y}) " if @x or @y
+      s += "(move x:#{x} y:#{y}) " if @x or @y
       s += "(buttons:#{@buttons}) " if @buttons
       s += "(wheel:#{@wheel}) " if @wheel
       s.chop!
