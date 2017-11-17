@@ -35,10 +35,21 @@ module SuperHid::Output
       @file = File.open("/dev/i2c-#{i2cbus}", "r+b")
       @file.ioctl(IOCLT_CODE_I2C_SLAVE, @address)
     end
+
+    def teardown
+      @file.close
+    end
     
     def send(payload)
-      $logger.debug{"write to `#{@file.path}': #{hexdump(payload)}"}
-      @file.write(payload)
+      case payload
+      when Array
+        payload.each {|p| send(p) }
+      when String
+        $logger.debug{"write to `#{@file.path}': #{hexdump(payload)}"}
+        @file.write(payload)
+      else
+        raise "Invalid argument: #{payload.inspect}"
+      end
     end
     
   end # class InterfaceI2c

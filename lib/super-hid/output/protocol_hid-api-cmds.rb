@@ -70,10 +70,6 @@ module SuperHid::Output
         raise "unsupproted event: #{event.inspect}"
       end
 
-      data = [ DEV_TYPES[dev_type] << 3 | OP_CODES[op_code] ]
-      data.concat(params)
-      data.pack(PACK_FMT_STRS[op_code])
-
       result
       
     end # def encode
