@@ -124,8 +124,10 @@ module SuperHid::Source
           while true
             binary = dev_io.read_nonblock(SIZEOF_INPUT_EVENT)
             byte_cnt = binary.length
-            $logger.warn("unexpected input: #{byte_cnt} bytes") if byte_cnt != SIZEOF_INPUT_EVENT
-            $logger.debug{"bytes %02d..%02d from %s: %s" % [ count, count + byte_cnt - 1, dev_io.path, SuperHid::Helper.hexdump(binary) ]}
+            if byte_cnt != SIZEOF_INPUT_EVENT
+              $logger.warn("unexpected input: #{byte_cnt} bytes") 
+              $logger.debug{"bytes %02d..%02d from %s: %s" % [ count, count + byte_cnt - 1, dev_io.path, SuperHid::Helper.hexdump(binary) ]}
+            end
             seconds, useconds, type, code, value = binary.unpack(INPUT_EVENT_UNPACK_FMTSTR)
             events << Event.new(@@devices[dev_io], seconds + (useconds*0.000001), type, code, value)
             count += byte_cnt
@@ -136,7 +138,7 @@ module SuperHid::Source
         end
       end
 
-      $logger.debug{"#{events.length} new event(s): #{events.map{|e|e.to_s}.join(" ")}"}
+      $logger.debug{"#{events.length} new event(s):  #{events.map{|e|e.to_s}.join(" -- ")}"}
       events
     end # def get_events
 

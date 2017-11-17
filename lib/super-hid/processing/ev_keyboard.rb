@@ -326,7 +326,7 @@ module SuperHid::Processing
       @action = action
     end
     def to_s
-      "keyboard #{@action} #{@key}"
+      "keyboard key #{@action} #{@key}"
     end
     def complete?
       @key and @action
