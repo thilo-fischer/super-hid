@@ -27,7 +27,7 @@ module SuperHid::Output
       result = []
       
       case event
-      when EvKbdKey
+      when SuperHid::Processing::EvKbdKey
         dev_type = :DEV_KBD_BOOT
         op_code = nil
         case event.action
@@ -40,13 +40,13 @@ module SuperHid::Output
         end
         params = [ event.hid_usage_id ]
         result = [ encode_single(dev_type, op_code, params) ]
-      when EvMouse
+      when SuperHid::Processing::EvMouse
         dev_type = :DEV_MOUSE
         # XXX What about BootMouse?
         if event.move?
           op_code = :OP_MOUSE_MOVE
           params = [ event.x, event.y ]
-          result.push_back(encode_single(dev_type, op_code, params))
+          result.push(encode_single(dev_type, op_code, params))
         end
         if event.buttons
           buttons.each do |id, action|
@@ -60,13 +60,13 @@ module SuperHid::Output
               raise "invalid event: #{event.inspect}"
             end
             params = [ id ]
-            result.push_back(encode_single(dev_type, op_code, params))
+            result.push(encode_single(dev_type, op_code, params))
           end
         end
         if event.wheel
           op_code = :OP_MOUSE_WHEEL
           params = [ event.wheel ]
-          result.push_back(encode_single(dev_type, op_code, params))          
+          result.push(encode_single(dev_type, op_code, params))          
         end
       else
         raise "unsupproted event: #{event.inspect}"
@@ -76,6 +76,18 @@ module SuperHid::Output
       
     end # def encode
 
+    # XXX Trigger HID API begin functions only for those devices
+    # specifically required, e.g. don't trigger :OP_MOUSE_BEGIN if only
+    # keyboard sources and operations are involved.
+    # XXX Allow to chose between Mouse and BootMouse etc.
+    def start
+      [ encode_single(:DEV_KBD_BOOT, :OP_KBD_BEGIN), encode_single(:DEV_MOUSE, :OP_MOUSE_BEGIN) ]
+    end
+    
+    def stop
+      [ encode_single(:DEV_KBD_BOOT, :OP_KBD_END), encode_single(:DEV_MOUSE, :OP_MOUSE_END) ]
+    end
+    
     private
 
     # Keep in sync with Arduino/hid-api-cmds/interface.h !!
@@ -136,18 +148,6 @@ module SuperHid::Output
       DEV_TYPES[dev_type] << 3 | OP_CODES[op_code]
     end
 
-    # XXX Trigger HID API begin functions only for those devices
-    # specifically required, e.g. don't trigger :OP_MOUSE_BEGIN if only
-    # keyboard sources and operations are involved.
-    # XXX Allow to chose between Mouse and BootMouse etc.
-    def start
-      [ encode_single(:DEV_KBD_BOOT, :OP_KBD_BEGIN), encode_single(:DEV_MOUSE, :OP_MOUSE_BEGIN) ]
-    end
-    
-    def stop
-      [ encode_single(:DEV_KBD_BOOT, :OP_KBD_END), encode_single(:DEV_MOUSE, :OP_MOUSE_END) ]
-    end
-    
   end # class ProtocolHidApiCmds
 
 end # module SuperHid::Output

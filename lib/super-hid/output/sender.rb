@@ -49,8 +49,8 @@ module SuperHid::Output
     end
 
     def add_to_pool
-      interface = @interface.SYMBOL
-      protocol = @protocol.SYMBOL
+      interface = @interface.class::SYMBOL
+      protocol = @protocol.class::SYMBOL
       address = @interface.address
       @@pool[interface] = {} unless @@pool.key?(interface)
       @@pool[interface][protocol] = {} unless @@pool[interface].key?(protocol)

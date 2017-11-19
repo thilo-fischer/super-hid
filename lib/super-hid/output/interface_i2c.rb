@@ -51,7 +51,7 @@ module SuperHid::Output
       when Array
         payload.each {|p| send(p) }
       when String
-        $logger.debug{"write to `#{@file.path}': #{hexdump(payload)}"}
+        $logger.debug{"write to `#{@file.path}': #{SuperHid::Helper::hexdump(payload)}"}
         @file.write(payload)
       else
         raise "Invalid argument: #{payload.inspect}"
