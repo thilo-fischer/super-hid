@@ -229,7 +229,7 @@ module SuperHid::Run
         SuperHid::Processing::Operation.new
       when /^log(:verbose)?$/
         SuperHid::Processing::OperationLog.new($1)
-      when "send(:(.*):(.*):(.*))?"
+      when /^send(:(.*):(.*):(.*))?$/
         interface = $2
         case interface
         when nil, ""
@@ -265,7 +265,7 @@ module SuperHid::Run
       when "QUIT"
         SuperHid::Processing::OperationQuit.new
       else
-        raise "invalid operation spec: #{arg}"
+        raise "invalid operation spec: `#{arg}'"
       end
     end # def parse_operation
     

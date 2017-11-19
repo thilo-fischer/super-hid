@@ -21,6 +21,8 @@ require 'super-hid/helper'
 
 module SuperHid::Output
 
+  # FIXME address being part of the interface class is wrong design!
+  
   class InterfaceI2c
 
     SYMBOL = :i2c

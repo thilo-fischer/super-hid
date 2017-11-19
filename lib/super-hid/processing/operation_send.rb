@@ -28,7 +28,7 @@ module SuperHid::Processing
       #@interface = interface
       #@protocol = protocol
       #@address = address
-      @sender = Sender.new(interface, protocol, address)
+      @sender = SuperHid::Output::Sender.new(interface, protocol, address)
     end
     
     def process(event)

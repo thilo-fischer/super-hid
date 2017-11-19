@@ -49,10 +49,13 @@ module SuperHid::Output
     end
 
     def add_to_pool
-      @@pool[@interface.SYMBOL] = {} unless @@pool.key?(interface)
-      @@pool[@interface.SYMBOL][@protocol.SYMBOL] = {} unless @@pool[interface].key?(protocol)
-      raise "sender instance already exists: #{self.inspect}" if @@pool[@interface.SYMBOL][@protocol.SYMBOL].key?(address)
-      @@pool[@interface.SYMBOL][@protocol.SYMBOL][address] = self
+      interface = @interface.SYMBOL
+      protocol = @protocol.SYMBOL
+      address = @interface.address
+      @@pool[interface] = {} unless @@pool.key?(interface)
+      @@pool[interface][protocol] = {} unless @@pool[interface].key?(protocol)
+      raise "sender instance already exists: #{self.inspect}" if @@pool[interface][protocol].key?(address)
+      @@pool[interface][protocol][address] = self
     end
 
     def initialize(interface, protocol, address)
